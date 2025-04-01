@@ -9,16 +9,42 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AOS from "aos";
 import "aos/dist/aos.css";
-export default function EditProductPage({ params }) {
-  const [product, setProduct] = useState(null);
-  const [formData, setFormData] = useState({
+
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  image: string;
+  category: string;
+}
+
+interface FormData {
+  title: string;
+  price: string | number;
+  description: string;
+  image: string;
+  category: string;
+}
+
+interface EditProductPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function EditProductPage({ params }: EditProductPageProps) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [formData, setFormData] = useState<FormData>({
     title: "",
     price: "",
     description: "",
     image: "",
     category: "",
   });
+  
   const router = useRouter();
+
   useEffect(() => {
     AOS.init({
       duration: 800,
@@ -27,15 +53,16 @@ export default function EditProductPage({ params }) {
       offset: 100,
     });
   }, []);
+
   // Fetch product data on the client-side
   useEffect(() => {
     const fetchProduct = async () => {
       const res = await fetch(`https://fakestoreapi.com/products/${params.id}`);
-      const data = await res.json();
+      const data: Product = await res.json();
       setProduct(data);
       setFormData({
         title: data.title,
-        price: data.price,
+        price: data.price.toString(),
         description: data.description,
         image: data.image,
         category: data.category,
@@ -45,21 +72,23 @@ export default function EditProductPage({ params }) {
     fetchProduct();
   }, [params.id]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const res = await fetch(`/api/products/${params.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({
+        ...formData,
+        price: parseFloat(formData.price as string)
+      }),
     });
-    // if (res.ok) {
-      router.push(`/product/${params.id}`);
-    // }
+    
+    router.push(`/product/${params.id}`);
   };
 
   if (!product) {
@@ -68,9 +97,8 @@ export default function EditProductPage({ params }) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="mx-auto max-w-2xl"  data-aos="fade-up"
-        data-aos-delay="100">
-        <CardHeader  data-aos="fade-right" data-aos-delay="200">
+      <Card className="mx-auto max-w-2xl" data-aos="fade-up" data-aos-delay="100">
+        <CardHeader data-aos="fade-right" data-aos-delay="200">
           <CardTitle>Edit Product</CardTitle>
           <CardDescription>Update product information.</CardDescription>
         </CardHeader>
@@ -86,7 +114,7 @@ export default function EditProductPage({ params }) {
                 required
               />
             </div>
-            <div className="space-y-2 " data-aos="zoom-in" data-aos-delay="450">
+            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="450">
               <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
@@ -98,7 +126,7 @@ export default function EditProductPage({ params }) {
                 required
               />
             </div>
-            <div className="space-y-2 "data-aos="zoom-in" data-aos-delay="500">
+            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="500">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"

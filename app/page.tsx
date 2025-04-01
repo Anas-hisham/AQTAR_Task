@@ -1,9 +1,23 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
-async function getProducts() {
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  category: string;
+  image: string;
+  rating?: {
+    rate: number;
+    count: number;
+  };
+}
+
+async function getProducts(): Promise<Product[]> {
   const res = await fetch("https://fakestoreapi.com/products", {
     next: { revalidate: 3600 }, // Revalidate every hour
   });

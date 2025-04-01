@@ -1,4 +1,5 @@
-
+/* eslint-disable react/no-unescaped-entities */
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
 import { ArrowLeft, Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,7 +15,20 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-async function getProduct(id: string) {
+interface Product {
+  id: number;
+  title: string;
+  price: number;
+  description: string;
+  category: string;
+  image: string;
+  rating?: {
+    rate: number;
+    count: number;
+  };
+}
+
+async function getProduct(id: string): Promise<Product | null> {
   const res = await fetch(`https://fakestoreapi.com/products/${id}`, {
     next: { revalidate: 3600 }, // Revalidate every hour
   });
@@ -26,7 +40,7 @@ async function getProduct(id: string) {
   return res.json();
 }
 
-async function getProducts() {
+async function getProducts(): Promise<Product[]> {
   const res = await fetch('https://fakestoreapi.com/products', {
     next: { revalidate: 3600 },
   });
@@ -46,7 +60,13 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function ProductPage({ params }: { params: { id: string } }) {
+interface ProductPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
   const product = await getProduct(params.id);
 
   if (!product) {
@@ -69,7 +89,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <Link href="/">
-          <Button >
+          <Button>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
