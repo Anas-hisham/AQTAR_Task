@@ -1,14 +1,15 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { notFound } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import AOS from "aos";
-import "aos/dist/aos.css";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 interface Product {
   id: number;
@@ -19,141 +20,93 @@ interface Product {
   category: string;
 }
 
-interface FormData {
-  title: string;
-  price: string | number;
-  description: string;
-  image: string;
-  category: string;
-}
-
-interface EditProductPageProps {
-  params: {
-    id: string;
-  };
-}
-
-export default function EditProductPage({ params }: EditProductPageProps) {
-  const [product, setProduct] = useState<Product | null>(null);
-  const [formData, setFormData] = useState<FormData>({
-    title: "",
-    price: "",
-    description: "",
-    image: "",
-    category: "",
-  });
+export async function generateStaticParams() {
+  // Fetch all product IDs to pre-render at build time
+  const res = await fetch('https://fakestoreapi.com/products');
+  const products: Product[] = await res.json();
   
-  const router = useRouter();
+  return products.map((product) => ({
+    id: product.id.toString(),
+  }));
+}
 
-  useEffect(() => {
-    AOS.init({
-      duration: 800,
-      easing: 'ease-in-out',
-      once: true,
-      offset: 100,
-    });
-  }, []);
+async function getProduct(id: string): Promise<Product | null> {
+  try {
+    const res = await fetch(`https://fakestoreapi.com/products/${id}`);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (error) {
+    return null;
+  }
+}
 
-  // Fetch product data on the client-side
-  useEffect(() => {
-    const fetchProduct = async () => {
-      const res = await fetch(`https://fakestoreapi.com/products/${params.id}`);
-      const data: Product = await res.json();
-      setProduct(data);
-      setFormData({
-        title: data.title,
-        price: data.price.toString(),
-        description: data.description,
-        image: data.image,
-        category: data.category,
-      });
-    };
-
-    fetchProduct();
-  }, [params.id]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const res = await fetch(`/api/products/${params.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...formData,
-        price: parseFloat(formData.price as string)
-      }),
-    });
-    
-    router.push(`/product/${params.id}`);
-  };
+export default async function EditProductPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const product = await getProduct(params.id);
 
   if (!product) {
-    return <div>Loading...</div>; // Handle loading state
+    notFound();
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Card className="mx-auto max-w-2xl" data-aos="fade-up" data-aos-delay="100">
-        <CardHeader data-aos="fade-right" data-aos-delay="200">
+      <Card className="mx-auto max-w-2xl">
+        <CardHeader>
           <CardTitle>Edit Product</CardTitle>
           <CardDescription>Update product information.</CardDescription>
         </CardHeader>
-        <CardContent data-aos="fade-left" data-aos-delay="300">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="400">
+        <CardContent>
+          <form action={`/api/products/${params.id}`} method="POST" className="space-y-6">
+            <input type="hidden" name="_method" value="PUT" />
+            
+            <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input
                 id="title"
                 name="title"
-                value={formData.title}
-                onChange={handleChange}
+                defaultValue={product.title}
                 required
               />
             </div>
-            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="450">
+            <div className="space-y-2">
               <Label htmlFor="price">Price</Label>
               <Input
                 id="price"
                 name="price"
                 type="number"
                 step="0.01"
-                value={formData.price}
-                onChange={handleChange}
+                defaultValue={product.price.toString()}
                 required
               />
             </div>
-            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="500">
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 name="description"
-                value={formData.description}
-                onChange={handleChange}
+                defaultValue={product.description}
                 required
               />
             </div>
-            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="550">
+            <div className="space-y-2">
               <Label htmlFor="image">Image URL</Label>
               <Input
                 id="image"
                 name="image"
                 type="url"
-                value={formData.image}
-                onChange={handleChange}
+                defaultValue={product.image}
                 required
               />
             </div>
-            <div className="space-y-2" data-aos="zoom-in" data-aos-delay="600">
+            <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
               <Input
                 id="category"
                 name="category"
-                value={formData.category}
-                onChange={handleChange}
+                defaultValue={product.category}
                 required
               />
             </div>
