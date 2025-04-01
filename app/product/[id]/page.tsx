@@ -1,8 +1,8 @@
 /* eslint-disable react/no-unescaped-entities */
 /* eslint-disable @next/next/no-img-element */
-import Link from 'next/link';
-import { ArrowLeft, Pencil, Trash } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import Link from "next/link";
+import { ArrowLeft, Pencil, Trash } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
+import Image from "next/image";
 
 interface Product {
   id: number;
@@ -41,7 +42,7 @@ async function getProduct(id: string): Promise<Product | null> {
 }
 
 async function getProducts(): Promise<Product[]> {
-  const res = await fetch('https://fakestoreapi.com/products', {
+  const res = await fetch("https://fakestoreapi.com/products", {
     next: { revalidate: 3600 },
   });
 
@@ -54,7 +55,7 @@ async function getProducts(): Promise<Product[]> {
 
 export async function generateStaticParams() {
   const products = await getProducts();
-  
+
   return products.map((product) => ({
     id: product.id.toString(),
   }));
@@ -97,10 +98,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
       </div>
       <div className="grid gap-8 md:grid-cols-2">
         <div className="aspect-square overflow-hidden rounded-lg bg-white p-8">
-          <img
+          <Image
             src={product.image}
             alt={product.title}
-            className="h-full w-full object-contain transition-transform duration-300 hover:scale-110"
+            width={300}
+            height={300}
+            className="h-[calc(100%-30px)] w-[calc(100%-30px)] object-contain transition-transform duration-300 hover:scale-110"
           />
         </div>
         <div>
@@ -133,15 +136,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete the
-                    product from our database.
+                    This action cannot be undone. This will permanently delete
+                    the product from our database.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+                  <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                     Delete Product
                   </AlertDialogAction>
                 </AlertDialogFooter>
